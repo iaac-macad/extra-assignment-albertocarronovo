@@ -6,6 +6,8 @@ import rhino3dm from "rhino3dm"
 import { RhinoCompute } from "rhinocompute"
 
 const definitionName = "PROTO_4_V4.gh"
+const mouse = new THREE.Vector2()
+window.addEventListener( 'click', onClick);
 
 // Set up sliders
 const radius_slider = document.getElementById("radius")
@@ -108,9 +110,7 @@ async function compute() {
 
       //iterate through userData and store all userdata to geometry
       for (let j = 0; j < g_userStrings.length; j++) {
-        rhinoObject
-          .attributes()
-          .setUserString(g_userStrings[j][0], g_userStrings[j][1])
+        rhinoObject.attributes().setUserString(g_userStrings[j][0], g_userStrings[j][1])
       }
 
       // rhinoObject.attributes().setUserString(g_userStrings[0][0], g_userStrings[0][1])
@@ -129,11 +129,12 @@ async function compute() {
     // go through all objects, check for userstrings and assing colors
 
     object.traverse((child) => {
-      if (child.isLine) {
+      if (child.isMesh) { //check if it's a mesh
         if (child.userData.attributes.geometry.userStringCount > 0) {
           //get color from userStrings
           const colorData = child.userData.attributes.userStrings[0]
           const col = colorData[1]
+          console.log(col)
 
           //convert color from userstring to THREE color and assign it
           const threeColor = new THREE.Color("rgb(" + col + ")")
@@ -158,23 +159,62 @@ function onSliderChange() {
 // THREE BOILERPLATE //
 let scene, camera, renderer, controls
 
+
+function onClick( event ) {
+
+  if (intersects.length > 0) {
+
+      // get closest object
+      const object = intersects[0].object
+      console.log(object) // debug
+
+      // get user strings
+      let data, count
+      if (object.userData.attributes !== undefined) {
+          data = object.userData.attributes.userStrings
+      } else {
+          // breps store user strings differently...
+          data = object.parent.userData.attributes.userStrings
+      }
+      // do nothing if no user strings
+      if ( data === undefined ) return
+
+      console.log( data )
+      
+      // create container div with table inside
+      container = document.createElement( 'div' )
+      container.id = 'container'
+      
+      const table = document.createElement( 'table' )
+      container.appendChild( table )
+
+      for ( let i = 0; i < data.length; i ++ ) {
+
+          const row = document.createElement( 'tr' )
+          row.innerHTML = `<td>${data[ i ][ 0 ]}</td><td>${data[ i ][ 1 ]}</td>`
+          table.appendChild( row )
+      }
+
+      document.body.appendChild( container )
+  }
+}
+
+
 /**
  * ThreeJS scene initiation with camera, rendered and lights setup
  */
 function init() {
-  // Listen to event of changin the screen size so camera can adjust
-  window.addEventListener("resize", onWindowResize, false)
 
   // create a scene and a camera
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(1, 1, 1)
+  scene.background = new THREE.Color(0.25, 0.25, 0.25)
   camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
     0.1,
     1000
   )
-  camera.position.z = -30
+  camera.position.z = -50
 
   // create the renderer and add it to the html
   renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -187,9 +227,11 @@ function init() {
   // add a directional light
   const directionalLight = new THREE.DirectionalLight(0xffffff)
   directionalLight.intensity = 2
+  directionalLight.position.set(0,-200,500);
   scene.add(directionalLight)
 
   const ambientLight = new THREE.AmbientLight()
+  ambientLight.color.set("Red");
   scene.add(ambientLight)
 
   animate()

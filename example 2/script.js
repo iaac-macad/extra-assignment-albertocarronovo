@@ -111,9 +111,7 @@ async function compute() {
     
     object.traverse((child) => {
       if (child.isMesh) { //check if it's a mesh
-
         if (child.userData.attributes.geometry.userStringCount > 0) {
-          
           //get color from userStrings
           const colorData = child.userData.attributes.userStrings[0]
           const col = colorData[1];
